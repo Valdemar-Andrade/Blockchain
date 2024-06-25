@@ -1,6 +1,7 @@
 Modelo/Blockchain.class
-utils/StringUtil.class
-Modelo/Usuario.class
-Modelo/Carteira.class
-Modelo/Transacao.class
+extra/Transacao.class
+DAO/AbstractDAO.class
+extra/Blockchain.class
+utils/BlockchainUtil.class
+extra/Bloco.class
 Modelo/Bloco.class

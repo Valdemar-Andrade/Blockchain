@@ -4,10 +4,7 @@
  */
 package Modelo;
 
-import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 
 /**
  *
@@ -15,84 +12,85 @@ import java.util.Arrays;
  */
 public class Bloco {
 
+    private int index;
+    private long timestamp;
+    private String conteudoDoBloco;
+    private String hashDoBlocoAnterior;
+    private String hash;
     private int nonce;
-    private String hash, hashBlocoAnterior;
-    private Transacao[] transacoes;
 
-    public Bloco () {
-    }
-
-    public Bloco ( int nonce, String hashBloboAnterior, Transacao[] transacoes ) {
-        this.nonce = nonce;
+    public Bloco ( int index, long timestamp, String conteudoDoBloco, String hashDoBlocoAnterior ) {
+        this.index = index;
+        this.timestamp = timestamp;
+        this.conteudoDoBloco = conteudoDoBloco;
+        this.hashDoBlocoAnterior = hashDoBlocoAnterior;
         this.hash = calcularHashDoBloco();
-        this.hashBlocoAnterior = hashBloboAnterior;
-        this.transacoes = transacoes;
+        this.nonce = 0;
     }
 
-    public int getId () {
-        return nonce;
+    public String calcularHashDoBloco () {
+        String input = index + Long.toString( timestamp ) + conteudoDoBloco + hashDoBlocoAnterior + nonce;
+        return gerarHashDoBloco( input );
     }
 
-    public void setId ( int id ) {
-        this.nonce = id;
+    private boolean hashDoBlocoEhValida ( String hash ) {
+        return hash.contains( "202" ) || hash.contains( "026" ) || hash.contains( "261" );
+    }
+
+    public void minerarBloco () {
+
+        while ( !hashDoBlocoEhValida( hash ) ) {
+            nonce++;
+            hash = calcularHashDoBloco();
+        }
+
+        System.out.println( "Bloco minerado: " + hash );
+    }
+
+    public static String gerarHashDoBloco ( String input ) {
+
+        try {
+
+            MessageDigest digest = MessageDigest.getInstance( "SHA-256" );
+            byte[] hash = digest.digest( input.getBytes( "UTF-8" ) );
+            StringBuilder hexString = new StringBuilder();
+
+            for ( byte b : hash ) {
+
+                String hex = Integer.toHexString( 0xff & b );
+
+                if ( hex.length() == 1 ) {
+                    hexString.append( '0' );
+                }
+
+                hexString.append( hex );
+            }
+
+            return hexString.toString();
+        }
+        catch ( Exception e ) {
+            throw new RuntimeException( e );
+        }
     }
 
     public String getHash () {
         return hash;
     }
 
-    public void setHash ( String hash ) {
-        this.hash = hash;
+    public void setHashDoBlocoAnterior ( String hashDoBlocoAnterior ) {
+        this.hashDoBlocoAnterior = hashDoBlocoAnterior;
     }
 
-    public String getHashBlocoAnterior () {
-        return hashBlocoAnterior;
+    public String getHashDoBlocoAnterior () {
+        return hashDoBlocoAnterior;
     }
 
-    public void setHashBlocoAnterior ( String hashBloboAnterior ) {
-        this.hashBlocoAnterior = hashBloboAnterior;
+    public String getConteudoDoBloco () {
+        return conteudoDoBloco;
     }
 
-    public Transacao[] getTransacoes () {
-        return transacoes;
-    }
-
-    public void setTransacoes ( Transacao[] transacoes ) {
-        this.transacoes = transacoes;
-    }
-
-    public String calcularHashDoBloco () {
-
-        String dataToHash = hashBlocoAnterior + Arrays.toString( transacoes );
-        MessageDigest digest;
-        byte[] bytes = null;
-
-        try {
-            digest = MessageDigest.getInstance( "SHA-256" );
-            bytes = digest.digest( dataToHash.getBytes( "UTF-8" ) );
-        }
-        catch ( UnsupportedEncodingException | NoSuchAlgorithmException ex ) {
-            ex.getStackTrace();
-        }
-
-        StringBuilder buffer = new StringBuilder();
-
-        for ( byte b : bytes ) {
-            buffer.append( String.format( "%02x", b ) );
-        }
-
-        return buffer.toString();
-    }
-
-    public void minerarBloco ( int grau ) {
-
-        String target = new String( new char[grau] ).replace( '\0', '0' );
-
-        while ( !this.hash.substring( 0, grau ).equals( target ) ) {
-            nonce++;
-            this.hash = calcularHashDoBloco();
-        }
-        System.out.println( "Bloco Minerado: " + hash );
+    public int getIndex () {
+        return index;
     }
 
 }
