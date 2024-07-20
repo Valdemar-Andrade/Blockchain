@@ -4,13 +4,24 @@
  */
 package Servlet;
 
+import DAO.LoginDAO;
+import DAO.SocketUsuarioDAO;
+import DAO.UsuarioDAO;
+import Modelo.PeerInformacao;
+import Modelo.SocketUsuario;
+import Sockets.BlockchainPeer;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import utils.DadosUsuarioSessao;
+import utils.PeersOnline;
 
 /**
  *
@@ -30,19 +41,75 @@ public class FazerLogin extends HttpServlet {
      */
     protected void processRequest ( HttpServletRequest request, HttpServletResponse response )
             throws ServletException, IOException {
-        response.setContentType( "text/html;charset=UTF-8" );
-        try ( PrintWriter out = response.getWriter() ) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println( "<!DOCTYPE html>" );
-            out.println( "<html>" );
-            out.println( "<head>" );
-            out.println( "<title>Servlet FazerLogin</title>" );            
-            out.println( "</head>" );
-            out.println( "<body>" );
-            out.println( "<h1>Servlet FazerLogin at " + request.getContextPath() + "</h1>" );
-            out.println( "</body>" );
-            out.println( "</html>" );
+
+        if ( request.getServletPath().equals( "/FazerLogin" ) ) {
+
+            String email = request.getParameter( "email" );
+            String senha = request.getParameter( "senha" );
+
+            try {
+
+                if ( autenticarLogin( email, senha ) ) {
+
+                    UsuarioDAO usuarioDao = new UsuarioDAO();
+                    SocketUsuarioDAO socketUsuarioDao = new SocketUsuarioDAO();
+
+                    String usuario = usuarioDao.listar().stream().filter( usu -> usu.getEmail().equals( email ) ).findFirst().get().getNome();
+                    int idUsuario = usuarioDao.listar().stream().filter( usu -> usu.getEmail().equals( email ) ).findFirst().get().getPkUsuario();
+                    SocketUsuario socketUsuario = socketUsuarioDao.listar().stream().filter( soc -> soc.getFk_usuario().equals( idUsuario ) ).findFirst().get();
+
+                    // Inicializar o nó do blockchain para o usuário logado
+                    //int porta = 5000 + idUsuario;
+                    int porta = Integer.parseInt( socketUsuario.getPorta() );
+                    
+                    BlockchainPeer peer = new BlockchainPeer( porta );
+                    peer.start();
+                    System.out.println( "BlockchainPeer iniciado na porta: " + porta );
+
+                    PeersOnline.adicionarPeerOnline( new PeerInformacao( "localhost", porta ) );
+                    System.out.println( "Peer adicionado à lista de peers online: localhost:" + porta );
+
+                    // Conectar-se a outros nós conhecidos
+                    List<PeerInformacao> peersOnline = getPeersOnline();
+
+                    for ( PeerInformacao peerInfo : peersOnline ) {
+                        try {
+                            System.out.println( "Conectando ao peer: " + peerInfo.getHost() + ":" + peerInfo.getPorta() );
+                            peer.conectarAoPeer( peerInfo.getHost(), peerInfo.getPorta() );
+                            System.out.println( "Conectado ao peer: " + peerInfo.getHost() + ":" + peerInfo.getPorta() );
+                        }
+                        catch ( IOException e ) {
+                            System.err.println( "Erro ao conectar ao peer: " + peerInfo.getHost() + ":" + peerInfo.getPorta() );
+                            e.printStackTrace();
+                        }
+                    }
+
+                    HttpSession sessao = request.getSession();
+                    sessao.setAttribute( "email", email );
+                    sessao.setAttribute( "usuario", usuario );
+                    sessao.setAttribute( "blockchainPeer", peer );
+                    sessao.setAttribute( "socketUsuario", socketUsuario );
+
+                    DadosUsuarioSessao.email = email;
+
+                    response.sendRedirect( "blockchain_usuario.jsp" );
+
+                }
+                else {
+
+                    String mensagemErro = "Credenciais invalidas";
+                    response.sendRedirect( "index.jsp?mensagemErro=" + mensagemErro );
+                }
+            }
+            catch ( SQLException ex ) {
+            }
         }
+    }
+
+    private boolean autenticarLogin ( String email, String senha ) {
+
+        return new LoginDAO().autenticarLogin( email, senha );
+
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -83,5 +150,11 @@ public class FazerLogin extends HttpServlet {
     public String getServletInfo () {
         return "Short description";
     }// </editor-fold>
+
+    private List<PeerInformacao> getPeersOnline () {
+
+        return PeersOnline.getPeersOnline().size() > 1 ? PeersOnline.getPeersOnline() : new ArrayList<>();
+
+    }
 
 }

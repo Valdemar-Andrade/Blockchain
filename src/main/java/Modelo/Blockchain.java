@@ -4,14 +4,21 @@
  */
 package Modelo;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import utils.Blowfish;
 
 /**
  *
  * @author valdemar
  */
-public class Blockchain {
+public class Blockchain implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     public ArrayList<Bloco> chain;
 
@@ -19,12 +26,25 @@ public class Blockchain {
 
         chain = new ArrayList<>();
 
-        criarBlocoGenesis();
+        try {
+            Blowfish blowfish = new Blowfish();
+            String conteudo = "Bloco Genesis";
+            conteudo = blowfish.criptografar( conteudo );
+            criarBlocoGenesis( conteudo );
+
+            System.out.println( "Bloco Genesis criado" );
+        }
+        catch ( Exception ex ) {
+            System.out.println( "Erro ao criar bloco Genesis" );
+        }
+
     }
 
-    public void criarBlocoGenesis () {
+    public void criarBlocoGenesis ( String conteudo ) throws Exception {
 
-        Bloco blocoGenesis = new Bloco( 0, new Date().getTime(), "Bloco Genesis", "0" );
+        Blowfish blowfish = new Blowfish();
+
+        Bloco blocoGenesis = new Bloco( 0, new Date().getTime(), conteudo, "0" );
 
         blocoGenesis.minerarBloco();
         chain.add( blocoGenesis );
@@ -58,6 +78,39 @@ public class Blockchain {
         }
 
         return true;
+    }
+
+    public boolean validarBloco ( Bloco bloco ) {
+
+        if ( !bloco.getHashDoBlocoAnterior().equals( getUltimoBloco().getHash() ) ) {
+            return false;
+        }
+
+        if ( !bloco.getHash().equals( bloco.calcularHashDoBloco() ) ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public List<Bloco> pesquisarBlocos ( String pesquisa ) {
+
+        List<Bloco> blocosEncontrados = new ArrayList<>();
+
+        Blowfish blow;
+        try {
+            blow = new Blowfish();
+            for ( Bloco bloco : chain ) {
+                if ( blow.desencriptar( bloco.getConteudoDoBloco() ).contains( pesquisa ) ) {
+                    blocosEncontrados.add( bloco );
+                }
+            }
+        }
+        catch ( Exception ex ) {
+            Logger.getLogger( Blockchain.class.getName() ).log( Level.SEVERE, null, ex );
+        }
+        
+        return blocosEncontrados;
     }
 
 }

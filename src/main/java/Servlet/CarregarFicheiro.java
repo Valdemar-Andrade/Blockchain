@@ -4,17 +4,15 @@
  */
 package Servlet;
 
-import DAO.UsuarioDAO;
 import Modelo.Blockchain;
 import Modelo.Bloco;
-import Modelo.Usuario;
+import Sockets.BlockchainPeer;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
@@ -24,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
 import utils.BlockchainUtil;
+import utils.Blowfish;
 
 /**
  *
@@ -32,8 +31,6 @@ import utils.BlockchainUtil;
 @MultipartConfig
 @WebServlet(name = "CarregarFicheiro", urlPatterns = { "/CarregarFicheiro" })
 public class CarregarFicheiro extends HttpServlet {
-
-    private HashMap<String, String> usuarios = new HashMap<>();
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -47,70 +44,93 @@ public class CarregarFicheiro extends HttpServlet {
     protected void processRequest ( HttpServletRequest request, HttpServletResponse response )
             throws ServletException, IOException {
 
-        HttpSession sessao = request.getSession();
-        String email = ( String ) sessao.getAttribute( "email" );
+        if ( request.getServletPath().equals( "/CarregarFicheiro" ) ) {
 
-        if ( email == null ) {
-            response.sendRedirect( "index.jsp" );
-            return;
+            request.setCharacterEncoding( "UTF-8" );
+            response.setCharacterEncoding( "UTF-8" );
+            String diretorio = "/Users/valdemar/apache-tomcat-9.0.71/bin/";
+
+            HttpSession sessao = request.getSession();
+            String email = ( String ) sessao.getAttribute( "email" );
+
+            if ( email == null ) {
+                response.sendRedirect( "index.jsp" );
+            }
+
+            String ehTexto = request.getParameter( "texto" );
+
+            if ( ehTexto.equals( "true" ) ) {
+
+                String conteudo = request.getParameter( "texto-simples" );
+
+                String nomeArquivo = email + "_blockchain.ucan";
+
+                Blockchain blockchain = BlockchainUtil.carregarBlockchain( diretorio + nomeArquivo );
+
+                //Para criptografar os dados
+                String encriptado = encriptarConteudoDoBloco( conteudo );
+
+                Bloco novoBloco = new Bloco( blockchain.chain.size(), new Date().getTime(), encriptado, blockchain.getUltimoBloco().getHash() );
+                blockchain.adicionarBlocoNaBlockchain( novoBloco );
+
+                BlockchainUtil.salvarBlockchain( blockchain, diretorio + nomeArquivo );
+
+                // Propagar atualização para todos os usuários
+                BlockchainPeer blockchainPeer = ( BlockchainPeer ) request.getSession().getAttribute( "blockchainPeer" );
+                blockchainPeer.adicionarBloco( novoBloco );
+
+            }
+
+            if ( ehTexto.equals( "false" ) ) {
+
+                Part filePart = request.getPart( "arquivo" );
+                String nomeArquivo = Paths.get( filePart.getSubmittedFileName() ).getFileName().toString();
+
+                File uploads = new File( "uploads" );
+                if ( !uploads.exists() ) {
+                    uploads.mkdirs();
+                }
+
+                File file = new File( uploads, nomeArquivo );
+                filePart.write( file.getAbsolutePath() );
+
+                String filePath = file.getAbsolutePath();
+
+                Blockchain blockchain = BlockchainUtil.carregarBlockchain( email + "_blockchain.ucan" );
+
+                String encriptar = "FILE:" + filePath;
+                String encriptado = encriptarConteudoDoBloco( encriptar );
+
+                Bloco novoBloco = new Bloco( blockchain.chain.size(), new Date().getTime(), encriptado, blockchain.getUltimoBloco().getHash() );
+                blockchain.adicionarBlocoNaBlockchain( novoBloco );
+
+                BlockchainUtil.salvarBlockchain( blockchain, email + "_blockchain.ucan" );
+
+                // Propagar atualização para todos os usuários
+                BlockchainPeer blockchainPeer = ( BlockchainPeer ) request.getSession().getAttribute( "blockchainPeer" );
+                blockchainPeer.adicionarBloco( novoBloco );
+
+            }
+
+            response.sendRedirect( "blockchain_usuario.jsp" );
         }
 
-        Part filePart = request.getPart( "file" );
-        String nomeArquivo = Paths.get( filePart.getSubmittedFileName() ).getFileName().toString();
+    }
 
-        File uploads = new File( "uploads" );
-        if ( !uploads.exists() ) {
-            uploads.mkdirs();
-        }
+    private String encriptarConteudoDoBloco ( String conteudo ) {
 
-        File file = new File( uploads, nomeArquivo );
-        filePart.write( file.getAbsolutePath() );
-
-        // Converter o arquivo para um formato que seja possivel armazenar na blockchain
-        String conteudoDoArquivo = new String( Files.readAllBytes( file.toPath() ) );
-
-        Blockchain blockchain = BlockchainUtil.carregarBlockchain( email + "_blockchain.ucan" );
-
-        Bloco novoBloco = new Bloco( blockchain.chain.size(), new Date().getTime(), conteudoDoArquivo, blockchain.getUltimoBloco().getHash() );
-        blockchain.adicionarBlocoNaBlockchain( novoBloco );
-
-        BlockchainUtil.salvarBlockchain( blockchain, email + "_blockchain.ucan" );
-
-        // Propagar atualização para todos os usuários
-        for ( String user : usuarios.keySet() ) {
-            BlockchainUtil.salvarBlockchain( blockchain, user + "_blockchain.ucan" );
-        }
-
-        try {
-            new UsuarioDAO().listar().stream().forEach( ( Usuario usuario ) -> {
-                BlockchainUtil.salvarBlockchain( blockchain, usuario.getEmail() + "_blockchain.ucan" );
-            } );
-        }
-        catch ( SQLException ex ) {
-            System.out.println( "Erro ao salvar blockchain para o usuário: " );
-            ex.printStackTrace();
-        }
-
-        /*/ Adicionar o conteudo do ficheiro na blockchain
-        Blockchain blockchain = ( Blockchain ) getServletContext().getAttribute( "blockchain" );
-
-        if ( blockchain == null ) {
-            blockchain = new Blockchain();
-            getServletContext().setAttribute( "blockchain", blockchain );
-        }
-
+        //Para criptografar os dados
         Blowfish blowfish;
 
         try {
             blowfish = new Blowfish();
-            String encryptedData = blowfish.encriptar( conteudoDoArquivo );
-            Bloco newBlock = new Bloco( blockchain.chain.size(), new Date().getTime(), encryptedData, blockchain.getUltimoBloco().getHash() );
-            blockchain.adicionarBlocoNaBlockchain( newBlock );
+            conteudo = blowfish.criptografar(conteudo );
         }
         catch ( Exception ex ) {
             Logger.getLogger( CarregarFicheiro.class.getName() ).log( Level.SEVERE, null, ex );
-        }*/
-        response.getWriter().println( "Ficheiro carregado e adicionado na blockchain com Suceso!" );
+        }
+
+        return conteudo;
 
     }
 

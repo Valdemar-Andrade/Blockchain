@@ -1,5 +1,6 @@
 package DAO;
 
+import assets.TradutorCase;
 import config.GerenciadorConexaoDB;
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -54,7 +55,7 @@ public class DAOImplementacao<T extends Object, K> extends AbstractDAO<T, K> {
     @Override
     public List<T> listar () throws SQLException {
 
-        System.out.println( "==================" + this.entidade.getClass().getSimpleName() + "====================" );
+        //System.out.println( "==================" + this.entidade.getClass().getSimpleName() + "====================" );
 
         PreparedStatement sentenca = this.conexao.prepareStatement( "SELECT * FROM " + this.getNomeEntidade() + ";" );
 
@@ -68,7 +69,7 @@ public class DAOImplementacao<T extends Object, K> extends AbstractDAO<T, K> {
 
         }
 
-        System.out.println( "===============================================" );
+        //System.out.println( "===============================================" );
 
         return listaRetorno;
     }

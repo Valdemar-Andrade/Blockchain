@@ -4,13 +4,16 @@
  */
 package Modelo;
 
-import java.security.MessageDigest;
+import java.io.Serializable;
+import utils.Blowfish;
 
 /**
  *
  * @author valdemar
  */
-public class Bloco {
+public class Bloco implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private int index;
     private long timestamp;
@@ -30,7 +33,17 @@ public class Bloco {
 
     public String calcularHashDoBloco () {
         String input = index + Long.toString( timestamp ) + conteudoDoBloco + hashDoBlocoAnterior + nonce;
-        return gerarHashDoBloco( input );
+
+        try {
+            Blowfish blowfishHash = new Blowfish();
+
+            return blowfishHash.gerarHashBlowfish( input );
+        }
+        catch ( Exception ex ) {
+            System.out.println( "Erro ao Criptografar o bloco" );
+        }
+
+        return "";
     }
 
     private boolean hashDoBlocoEhValida ( String hash ) {
@@ -44,33 +57,7 @@ public class Bloco {
             hash = calcularHashDoBloco();
         }
 
-        System.out.println( "Bloco minerado: " + hash );
-    }
-
-    public static String gerarHashDoBloco ( String input ) {
-
-        try {
-
-            MessageDigest digest = MessageDigest.getInstance( "SHA-256" );
-            byte[] hash = digest.digest( input.getBytes( "UTF-8" ) );
-            StringBuilder hexString = new StringBuilder();
-
-            for ( byte b : hash ) {
-
-                String hex = Integer.toHexString( 0xff & b );
-
-                if ( hex.length() == 1 ) {
-                    hexString.append( '0' );
-                }
-
-                hexString.append( hex );
-            }
-
-            return hexString.toString();
-        }
-        catch ( Exception e ) {
-            throw new RuntimeException( e );
-        }
+        System.out.println( "Bloco verificado: " + hash );
     }
 
     public String getHash () {
@@ -91,6 +78,10 @@ public class Bloco {
 
     public int getIndex () {
         return index;
+    }
+
+    public long getTimestamp () {
+        return timestamp;
     }
 
 }

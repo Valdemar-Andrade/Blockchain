@@ -12,27 +12,27 @@ import java.util.Objects;
  */
 public class Login {
     
-    private Integer pk_login;
+    private Integer pkLogin;
     private String email;
     private String senha;
-    private Integer fk_usuario;
+    private Integer fkUsuario;
 
     public Login () {
     }
 
-    public Login ( Integer pk_login, String email, String senha, Integer fk_usuario ) {
-        this.pk_login = pk_login;
+    public Login ( Integer pkLogin, String email, String senha, Integer fkUsuario ) {
+        this.pkLogin = pkLogin;
         this.email = email;
         this.senha = senha;
-        this.fk_usuario = fk_usuario;
+        this.fkUsuario = fkUsuario;
     }
 
-    public Integer getPk_login () {
-        return pk_login;
+    public Integer getPkLogin () {
+        return pkLogin;
     }
 
-    public void setPk_login ( Integer pk_login ) {
-        this.pk_login = pk_login;
+    public void setPkLogin ( Integer pkLogin ) {
+        this.pkLogin = pkLogin;
     }
 
     public String getEmail () {
@@ -51,21 +51,21 @@ public class Login {
         this.senha = senha;
     }
 
-    public Integer getFk_usuario () {
-        return fk_usuario;
+    public Integer getFkUsuario () {
+        return fkUsuario;
     }
 
-    public void setFk_usuario ( Integer fk_usuario ) {
-        this.fk_usuario = fk_usuario;
+    public void setFkUsuario ( Integer fkUsuario ) {
+        this.fkUsuario = fkUsuario;
     }
 
     @Override
     public int hashCode () {
         int hash = 7;
-        hash = 31 * hash + Objects.hashCode( this.pk_login );
+        hash = 31 * hash + Objects.hashCode(this.pkLogin );
         hash = 31 * hash + Objects.hashCode( this.email );
         hash = 31 * hash + Objects.hashCode( this.senha );
-        hash = 31 * hash + Objects.hashCode( this.fk_usuario );
+        hash = 31 * hash + Objects.hashCode(this.fkUsuario );
         return hash;
     }
 
@@ -87,10 +87,10 @@ public class Login {
         if ( !Objects.equals( this.senha, other.senha ) ) {
             return false;
         }
-        if ( !Objects.equals( this.pk_login, other.pk_login ) ) {
+        if ( !Objects.equals(this.pkLogin, other.pkLogin ) ) {
             return false;
         }
-        return Objects.equals( this.fk_usuario, other.fk_usuario );
+        return Objects.equals(this.fkUsuario, other.fkUsuario );
     }
 
 }

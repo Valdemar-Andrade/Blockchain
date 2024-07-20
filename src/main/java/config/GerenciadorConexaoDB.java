@@ -31,7 +31,7 @@ public class GerenciadorConexaoDB implements IGerenciadorConexaoDB {
             Class.forName("org.postgresql.Driver");
             conexao = DriverManager.getConnection( url, ConstantesBancoDados.NOME_UTILIZADOR, ConstantesBancoDados.SENHA );
         }
-        catch ( ClassNotFoundException ex ) {
+        catch ( ClassNotFoundException | SQLException ex ) {
             System.out.println( "Erro Driver nao encontrado" );
         }
         

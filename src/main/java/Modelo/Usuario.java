@@ -12,25 +12,25 @@ import java.util.Objects;
  */
 public class Usuario {
     
-    private Integer pk_usuario;
+    private Integer pkUsuario;
     private String nome;
     private String email;
 
     public Usuario () {
     }
 
-    public Usuario ( Integer pk_usuario, String nome, String email ) {
-        this.pk_usuario = pk_usuario;
+    public Usuario ( Integer pkUsuario, String nome, String email ) {
+        this.pkUsuario = pkUsuario;
         this.nome = nome;
         this.email = email;
     }
 
-    public Integer getPk_usuario () {
-        return pk_usuario;
+    public Integer getPkUsuario () {
+        return pkUsuario;
     }
 
-    public void setPk_usuario ( Integer pk_usuario ) {
-        this.pk_usuario = pk_usuario;
+    public void setPkUsuario ( Integer pkUsuario ) {
+        this.pkUsuario = pkUsuario;
     }
 
     public String getNome () {
@@ -52,7 +52,7 @@ public class Usuario {
     @Override
     public int hashCode () {
         int hash = 3;
-        hash = 59 * hash + Objects.hashCode( this.pk_usuario );
+        hash = 59 * hash + Objects.hashCode(this.pkUsuario );
         hash = 59 * hash + Objects.hashCode( this.nome );
         hash = 59 * hash + Objects.hashCode( this.email );
         return hash;
@@ -76,7 +76,7 @@ public class Usuario {
         if ( !Objects.equals( this.email, other.email ) ) {
             return false;
         }
-        return Objects.equals( this.pk_usuario, other.pk_usuario );
+        return Objects.equals(this.pkUsuario, other.pkUsuario );
     }
     
 }

@@ -4,7 +4,6 @@
  */
 package Modelo;
 
-import java.util.Date;
 import utils.Blowfish;
 
 /**
@@ -12,21 +11,28 @@ import utils.Blowfish;
  * @author valdemar
  */
 public class Main {
-    
-    public static void main(String[] args) throws Exception {
-        Blockchain blockchain = new Blockchain();
-        
-        Blowfish blowfish = new Blowfish();
-        String encryptedData = blowfish.encriptar("Some confidential data");
-        
-        blockchain.adicionarBlocoNaBlockchain(new Bloco(1, new Date().getTime(), encryptedData, blockchain.getUltimoBloco().getHash()));
-        blockchain.adicionarBlocoNaBlockchain(new Bloco(2, new Date().getTime(), encryptedData, blockchain.getUltimoBloco().getHash()));
-        
-        System.out.println("Blockchain is valid: " + blockchain.blockchainEhValida());
-        
-        for (Bloco block : blockchain.chain) {
-            System.out.println("Block Data: " + blowfish.desencriptar(block.getConteudoDoBloco()));
+
+    public static void main ( String[] args ) throws Exception {
+
+        try {
+
+            Blowfish blowfish = new Blowfish();
+
+            String textoOriginal = "Texto para criptografar";
+            String textoCriptografado = blowfish.criptografar( textoOriginal );
+            String textoDesencriptado = blowfish.desencriptar( textoCriptografado );
+            String hashBlowfish = blowfish.gerarHashBlowfish( textoOriginal );
+
+            System.out.println( "Texto Original: " + textoOriginal );
+            System.out.println( "Texto Criptografado: " + textoCriptografado );
+            System.out.println( "Texto Desencriptado: " + textoDesencriptado );
+            System.out.println( "Hash Blowfish: " + hashBlowfish );
+
         }
+        catch ( Exception e ) {
+            e.printStackTrace();
+        }
+
     }
-    
+
 }
