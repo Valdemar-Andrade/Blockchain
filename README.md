@@ -1,2 +1,2 @@
 # Blockchain
-Desenvolvimento de uma Blockchain e uma Criptomoeda simples em Java
+Desenvolvimento de uma Blockchain Genérica e Descentralizada para armazenar arquivos diversos.
