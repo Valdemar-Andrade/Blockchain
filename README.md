@@ -10,3 +10,6 @@ Desenvolvimento de uma Blockchain Genérica e Descentralizada para armazenar arq
 - Servlets
 - PostgreSQL
 - BlowFish (para criptografia)
+
+- Jakarta EE 8 Web
+- Tomcat
