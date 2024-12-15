@@ -1,5 +1,5 @@
 # Blockchain
-Desenvolvimento de uma Blockchain Genérica e Descentralizada para armazenar arquivos diversos (arquivos, textos simples) de forma encriptada.
+Desenvolvimento de uma Blockchain Genérica e Descentralizada para armazenar arquivos diversos (arquivos, textos simples...) de forma encriptada.
 
 ## Ferramentas usadas
 
